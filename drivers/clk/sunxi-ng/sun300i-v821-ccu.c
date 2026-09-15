@@ -10,6 +10,7 @@
 #include "ccu_common.h"
 #include "ccu_div.h"
 #include "ccu_gate.h"
+#include "ccu_mp.h"
 #include "ccu_reset.h"
 
 #include <dt-bindings/clock/sun300i-v821-ccu.h>
@@ -29,10 +30,12 @@ static const struct clk_parent_data bus_parents[] = {
 	{ .fw_name = "pll-peri-192m" },
 };
 
-static SUNXI_CCU_M_DATA_WITH_MUX_GATE(mmc0_clk, "mmc0", mmc_parents, 0x014,
-				      0, 5, 24, 1, BIT(31), 0);
-static SUNXI_CCU_M_DATA_WITH_MUX_GATE(spif_clk, "spif", spif_parents, 0x020,
-				      0, 4, 24, 1, BIT(31), 0);
+static SUNXI_CCU_DUALDIV_MUX_GATE(mmc0_clk, "mmc0", mmc_parents, 0x014,
+				  0, 5, 16, 5, 24, 3,
+				  BIT(31), 0);
+static SUNXI_CCU_DUALDIV_MUX_GATE(spif_clk, "spif", spif_parents, 0x020,
+				  0, 4, 16, 2, 24, 2,
+				  BIT(31), 0);
 
 static SUNXI_CCU_GATE_DATA(bus_mmc0_clk, "bus-mmc0", bus_parents,
 			   0x084, BIT(20), 0);
