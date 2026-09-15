@@ -5,6 +5,7 @@
 
 #include <linux/clk.h>
 #include <linux/io.h>
+#include <linux/kernel.h>
 #include <linux/mailbox_client.h>
 #include <linux/mod_devicetable.h>
 #include <linux/module.h>
@@ -49,6 +50,7 @@ static void v821_rproc_core_reset(struct v821_rproc *v821, bool assert)
 static int v821_rproc_start(struct rproc *rproc)
 {
 	struct v821_rproc *v821 = rproc->priv;
+	u32 bootaddr;
 	int ret;
 
 	ret = reset_control_assert(v821->rv_reset);
@@ -69,16 +71,25 @@ static int v821_rproc_start(struct rproc *rproc)
 	if (ret)
 		goto err_ts;
 
-	dma_wmb();
-	writel(rproc->bootaddr, v821->cfg + RV_CFG_BOOT_ADDR);
-
-	ret = reset_control_deassert(v821->apb_reset);
+	ret = reset_control_deassert(v821->rv_reset);
 	if (ret)
 		goto err_gate;
 
-	ret = reset_control_deassert(v821->rv_reset);
+	ret = reset_control_deassert(v821->apb_reset);
 	if (ret)
+		goto err_rv_assert;
+
+	/* The RV_CFG register file only accepts writes after RV reset release. */
+	dma_wmb();
+	bootaddr = lower_32_bits(rproc->bootaddr);
+	writel(bootaddr, v821->cfg + RV_CFG_BOOT_ADDR);
+	if (readl(v821->cfg + RV_CFG_BOOT_ADDR) != bootaddr) {
+		dev_err(v821->dev,
+			"failed to set E907 boot address: wanted %08x got %08x\n",
+			bootaddr, readl(v821->cfg + RV_CFG_BOOT_ADDR));
+		ret = -EIO;
 		goto err_apb_assert;
+	}
 
 	v821_rproc_core_reset(v821, false);
 
@@ -86,14 +97,16 @@ static int v821_rproc_start(struct rproc *rproc)
 
 err_apb_assert:
 	reset_control_assert(v821->apb_reset);
+err_rv_assert:
+	reset_control_assert(v821->rv_reset);
 err_gate:
 	clk_disable_unprepare(v821->gate_clk);
 err_ts:
 	clk_disable_unprepare(v821->ts_clk);
 err_apb:
-	reset_control_deassert(v821->apb_reset);
+	reset_control_assert(v821->apb_reset);
 err_rv:
-	reset_control_deassert(v821->rv_reset);
+	reset_control_assert(v821->rv_reset);
 	return ret;
 }
 
