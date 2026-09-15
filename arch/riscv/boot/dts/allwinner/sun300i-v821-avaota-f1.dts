@@ -23,7 +23,28 @@
 		ranges;
 
 		e907_mem: e907@81000000 {
-			reg = <0 0x81000000 0 0x646000>;
+			reg = <0 0x81000000 0 0x200000>;
+			no-map;
+		};
+
+		vdev0buffer: vdev0buffer@81200000 {
+			compatible = "shared-dma-pool";
+			reg = <0 0x81200000 0 0x40000>;
+			no-map;
+		};
+
+		vdev0vring0: vdev0vring0@81240000 {
+			reg = <0 0x81240000 0 0x2000>;
+			no-map;
+		};
+
+		vdev0vring1: vdev0vring1@81242000 {
+			reg = <0 0x81242000 0 0x2000>;
+			no-map;
+		};
+
+		share_irq_table: share-irq-table@81644000 {
+			reg = <0 0x81644000 0 0x2000>;
 			no-map;
 		};
 
@@ -49,6 +70,8 @@
 };
 
 &e907_rproc {
+	memory-region = <&e907_mem>, <&vdev0buffer>, <&vdev0vring0>,
+			<&vdev0vring1>, <&share_irq_table>;
 	status = "okay";
 };
 

@@ -9,9 +9,11 @@
 #include <linux/mod_devicetable.h>
 #include <linux/module.h>
 #include <linux/of_address.h>
+#include <linux/of_reserved_mem.h>
 #include <linux/platform_device.h>
 #include <linux/remoteproc.h>
 #include <linux/reset.h>
+#include <linux/string.h>
 
 #define RV_CFG_BOOT_ADDR		0x204
 #define E907_CORE_RESET_REG		0x09c
@@ -134,13 +136,6 @@ static void *v821_rproc_da_to_va(struct rproc *rproc, u64 da, size_t len,
 	return v821->mem + da - v821->mem_pa;
 }
 
-static const struct rproc_ops v821_rproc_ops = {
-	.start		= v821_rproc_start,
-	.stop		= v821_rproc_stop,
-	.kick		= v821_rproc_kick,
-	.da_to_va	= v821_rproc_da_to_va,
-};
-
 static int v821_rproc_map_memory(struct device *dev, struct v821_rproc *v821)
 {
 	struct device_node *np;
@@ -166,6 +161,84 @@ static int v821_rproc_map_memory(struct device *dev, struct v821_rproc *v821)
 
 	return 0;
 }
+
+static int v821_rproc_mem_alloc(struct rproc *rproc,
+				struct rproc_mem_entry *mem)
+{
+	mem->va = ioremap_wc(mem->dma, mem->len);
+
+	return mem->va ? 0 : -ENOMEM;
+}
+
+static int v821_rproc_mem_release(struct rproc *rproc,
+				  struct rproc_mem_entry *mem)
+{
+	if (mem->va)
+		iounmap(mem->va);
+
+	return 0;
+}
+
+static int v821_rproc_prepare(struct rproc *rproc)
+{
+	struct device *dev = rproc->dev.parent;
+	struct device_node *np = dev->of_node;
+	struct rproc_mem_entry *mem;
+	struct resource res;
+	unsigned int region = 0;
+	unsigned int vdev_index = 0;
+	const char *name_end;
+	u64 da;
+	int ret;
+
+	while (1) {
+		ret = of_reserved_mem_region_to_resource(np, region++, &res);
+		if (ret == -ENODEV)
+			break;
+		if (ret)
+			return ret;
+
+		/* The firmware region is mapped separately for ELF loading. */
+		if (strstarts(res.name, "e907"))
+			continue;
+
+		da = res.start;
+		name_end = strchrnul(res.name, '@');
+
+		if (strstarts(res.name, "vdev0buffer")) {
+			mem = rproc_of_resm_mem_entry_init(&rproc->dev,
+							   region - 1,
+							   resource_size(&res),
+							   da,
+							   "vdev%dbuffer",
+							   vdev_index++);
+		} else {
+			mem = rproc_mem_entry_init(&rproc->dev, NULL,
+						   res.start,
+						   resource_size(&res), da,
+						   v821_rproc_mem_alloc,
+						   v821_rproc_mem_release,
+						   "%.*s",
+						   (int)(name_end -
+							 res.name),
+						   res.name);
+		}
+		if (!mem)
+			return -ENOMEM;
+
+		rproc_add_carveout(rproc, mem);
+	}
+
+	return 0;
+}
+
+static const struct rproc_ops v821_rproc_ops = {
+	.prepare	= v821_rproc_prepare,
+	.start		= v821_rproc_start,
+	.stop		= v821_rproc_stop,
+	.kick		= v821_rproc_kick,
+	.da_to_va	= v821_rproc_da_to_va,
+};
 
 static int v821_rproc_map_ccu(struct device *dev, struct v821_rproc *v821)
 {
