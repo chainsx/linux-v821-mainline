@@ -503,6 +503,17 @@ static void __maybe_unused sunxi_spif_config_tc(struct sunxi_spif *sspi)
 	}
 }
 
+static void sunxi_spif_init_sample_delay(struct sunxi_spif *sspi)
+{
+	if (sspi->data->sample_mode == SAMP_MODE_DL_DEFAULT)
+		return;
+
+	sunxi_spif_samp_mode(sspi, 1);
+	sunxi_spif_samp_dl_sw_rx_status(sspi, 1);
+	sunxi_spif_set_sample_mode(sspi, sspi->data->sample_mode);
+	sunxi_spif_set_sample_delay(sspi, sspi->data->sample_delay);
+}
+
 static void sunxi_spif_set_cs_delay(struct sunxi_spif *sspi)
 {
 	u32 reg_val = readl(sspi->base_addr + SPIF_CSD_REG);
@@ -716,6 +727,7 @@ static int sunxi_spif_hw_init(struct sunxi_spif *sspi)
 
 	/* 4. set sample delay timing */
 	//sunxi_spif_config_tc(sspi);
+	sunxi_spif_init_sample_delay(sspi);
 
 	/* 5. set the dedault vaule */
 	sunxi_spif_set_cs_delay(sspi);
@@ -1626,6 +1638,67 @@ static const struct spi_nor_controller_ops sunxi_controller_ops = {
 	.write = sunxi_spif_nor_write,
 };
 
+static bool sunxi_spif_valid_jedec_id(const u8 *id)
+{
+	bool all_zeroes = true;
+	bool all_ones = true;
+	int i;
+
+	for (i = 0; i < 3; i++) {
+		if (id[i] != 0x00)
+			all_zeroes = false;
+		if (id[i] != 0xff)
+			all_ones = false;
+	}
+
+	return !all_zeroes && !all_ones;
+}
+
+static int sunxi_spif_read_jedec_id(struct sunxi_spif *sspi, u8 *id)
+{
+	struct spi_mem_op op = {
+		.cmd = SPI_MEM_OP_CMD(SPINOR_OP_RDID, 1),
+		.data = SPI_MEM_OP_DATA_IN(3, id, 1),
+	};
+
+	memset(id, 0, 3);
+
+	return sspi->transfer_one(sspi, &op);
+}
+
+static void sunxi_spif_calibrate_sample_delay(struct sunxi_spif *sspi)
+{
+	u8 id[3];
+	unsigned int mode;
+	unsigned int delay;
+
+	sunxi_spif_samp_mode(sspi, 1);
+	sunxi_spif_samp_dl_sw_rx_status(sspi, 1);
+
+	if (!sunxi_spif_read_jedec_id(sspi, id) &&
+	    sunxi_spif_valid_jedec_id(id))
+		return;
+
+	for (mode = 0; mode <= 1; mode++) {
+		sunxi_spif_set_sample_mode(sspi, mode);
+		for (delay = 0; delay < 64; delay++) {
+			sunxi_spif_set_sample_delay(sspi, delay);
+			if (sunxi_spif_read_jedec_id(sspi, id))
+				continue;
+
+			if (!sunxi_spif_valid_jedec_id(id))
+				continue;
+
+			sspi->data->sample_mode = mode;
+			sspi->data->sample_delay = delay;
+			sunxi_info(&sspi->pdev->dev,
+				   "calibrated sample mode:%u delay:%u\n",
+				   mode, delay);
+			return;
+		}
+	}
+}
+
 /*
  * Get spi flash device information and register it as a mtd device.
  */
@@ -1764,6 +1837,8 @@ static int sunxi_spif_probe(struct platform_device *pdev)
 
 	spin_lock_init(&sspi->lock);
 	init_completion(&sspi->done);
+
+	sunxi_spif_calibrate_sample_delay(sspi);
 
 	err = sunxi_spif_nor_register(sspi);
 	if (err) {

@@ -140,6 +140,14 @@
 				function = "spif";
 				drive-strength = <20>;
 			};
+
+			/omit-if-no-ref/
+			spif_cs_pins: spif-cs-pins {
+				pins = "PC6", "PC7", "PC10";
+				function = "spif";
+				drive-strength = <20>;
+				bias-pull-up;
+			};
 		};
 
 		r_pio: pinctrl@42000540 {
@@ -198,9 +206,11 @@
 			clock-names = "pclk", "mclk", "bus";
 			resets = <&ccu RST_BUS_SPIF>;
 			pinctrl-names = "default";
-			pinctrl-0 = <&spif_pins>;
+			pinctrl-0 = <&spif_pins>, <&spif_cs_pins>;
 			spif-rx-bus-width = <4>;
 			spif-tx-bus-width = <4>;
+			sample_mode = <0>;
+			sample_delay = <16>;
 			status = "disabled";
 		};
 
