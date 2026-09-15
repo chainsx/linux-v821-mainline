@@ -52,6 +52,10 @@
 	status = "okay";
 };
 
+&spif0 {
+	status = "okay";
+};
+
 &mmc0 {
 	cd-gpios = <&pio 2 15 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
 	status = "okay";

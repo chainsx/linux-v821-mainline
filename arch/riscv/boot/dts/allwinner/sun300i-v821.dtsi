@@ -10,6 +10,7 @@
 	aliases {
 		mmc0 = &mmc0;
 		serial0 = &uart0;
+		spif0 = &spif0;
 	};
 
 	cpus {
@@ -185,6 +186,21 @@
 			reset-names = "rv", "apb";
 			mboxes = <&msgbox 0>;
 			mbox-names = "tx";
+			status = "disabled";
+		};
+
+		spif0: spi-flash@44f00000 {
+			compatible = "allwinner,sun300i-spif";
+			reg = <0 0x44f00000 0 0x1000>;
+			interrupts = <20 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&pll_peri_384m>, <&ccu CLK_SPIF>,
+				 <&ccu CLK_BUS_SPIF>;
+			clock-names = "pclk", "mclk", "bus";
+			resets = <&ccu RST_BUS_SPIF>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&spif_pins>;
+			spif-rx-bus-width = <4>;
+			spif-tx-bus-width = <4>;
 			status = "disabled";
 		};
 

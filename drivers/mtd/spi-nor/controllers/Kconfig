@@ -16,3 +16,11 @@ config SPI_NXP_SPIFI
 	  SPIFI is a specialized controller for connecting serial SPI
 	  Flash. Enable this option if you have a device with a SPIFI
 	  controller and want to access the Flash as a mtd device.
+
+config SPIF_SUNXI
+	tristate "Allwinner SPIF SPI NOR Flash Controller"
+	depends on OF && HAS_IOMEM
+	help
+	  Enable support for the Allwinner SPIF controller. This controller
+	  is dedicated to parallel-to-serial SPI NOR flash and exposes the
+	  flash to Linux as an MTD device.
