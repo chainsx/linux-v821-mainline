@@ -1310,6 +1310,9 @@ static int sunxi_mmc_resource_request(struct sunxi_mmc_host *host,
 	if (ret)
 		return ret;
 
+	if (!host->mmc->ocr_avail)
+		host->mmc->ocr_avail = MMC_VDD_32_33 | MMC_VDD_33_34;
+
 	host->reg_base = devm_platform_ioremap_resource(pdev, 0);
 	if (IS_ERR(host->reg_base))
 		return PTR_ERR(host->reg_base);
