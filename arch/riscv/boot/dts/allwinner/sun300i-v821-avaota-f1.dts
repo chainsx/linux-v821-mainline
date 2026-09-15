@@ -2,6 +2,7 @@
 /dts-v1/;
 
 #include "sun300i-v821.dtsi"
+#include <dt-bindings/gpio/gpio.h>
 
 / {
 	model = "AvaotaSBC Avaota F1";
@@ -52,6 +53,7 @@
 };
 
 &mmc0 {
+	cd-gpios = <&pio 2 15 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
 	status = "okay";
 };
 
