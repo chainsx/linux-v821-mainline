@@ -95,6 +95,11 @@
 			#reset-cells = <1>;
 		};
 
+		aon_ccu: clock-controller@4a010000 {
+			compatible = "syscon", "simple-mfd";
+			reg = <0 0x4a010000 0 0x600>;
+		};
+
 		pio_apb: clock-40m-apb {
 			compatible = "fixed-clock";
 			clock-frequency = <40000000>;
@@ -185,6 +190,7 @@
 			compatible = "allwinner,sun300i-v821-rproc";
 			reg = <0 0x43030000 0 0x1000>;
 			allwinner,ccu = <&ccu>;
+			allwinner,aon-ccu = <&aon_ccu>;
 			firmware-name = "amp_rv0.bin";
 			memory-region = <&e907_mem>;
 			clocks = <&e907_core>, <&ccu CLK_RISCV>,

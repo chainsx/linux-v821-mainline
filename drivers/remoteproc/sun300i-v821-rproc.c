@@ -20,12 +20,17 @@
 #define E907_CORE_RESET_REG		0x09c
 #define E907_CORE_RESET_KEY		0xa5690000
 #define E907_CORE_RESET_BIT		BIT(0)
+#define E907_AON_CLK_REG		0x584
+#define E907_AON_CLK_MUX_MASK		GENMASK(26, 24)
+#define E907_AON_CLK_DIV_MASK		GENMASK(4, 0)
+#define E907_AON_CLK_MUX_614M		6
 
 struct v821_rproc {
 	struct device *dev;
 	void __iomem *cfg;
 	void __iomem *mem;
 	void __iomem *ccu;
+	void __iomem *aon_ccu;
 	phys_addr_t mem_pa;
 	resource_size_t mem_size;
 	struct clk *core_clk;
@@ -47,6 +52,16 @@ static void v821_rproc_core_reset(struct v821_rproc *v821, bool assert)
 	writel(value, v821->ccu + E907_CORE_RESET_REG);
 }
 
+static void v821_rproc_select_core_clock(struct v821_rproc *v821)
+{
+	u32 value;
+
+	value = readl(v821->aon_ccu + E907_AON_CLK_REG);
+	value &= ~(E907_AON_CLK_MUX_MASK | E907_AON_CLK_DIV_MASK);
+	value |= E907_AON_CLK_MUX_614M << 24;
+	writel(value, v821->aon_ccu + E907_AON_CLK_REG);
+}
+
 static int v821_rproc_start(struct rproc *rproc)
 {
 	struct v821_rproc *v821 = rproc->priv;
@@ -62,6 +77,8 @@ static int v821_rproc_start(struct rproc *rproc)
 		goto err_rv;
 
 	v821_rproc_core_reset(v821, true);
+
+	v821_rproc_select_core_clock(v821);
 
 	ret = clk_prepare_enable(v821->ts_clk);
 	if (ret)
@@ -275,6 +292,28 @@ static int v821_rproc_map_ccu(struct device *dev, struct v821_rproc *v821)
 	return 0;
 }
 
+static int v821_rproc_map_aon_ccu(struct device *dev, struct v821_rproc *v821)
+{
+	struct device_node *np;
+	struct resource res;
+	int ret;
+
+	np = of_parse_phandle(dev->of_node, "allwinner,aon-ccu", 0);
+	if (!np)
+		return dev_err_probe(dev, -EINVAL, "missing AON CCU phandle\n");
+
+	ret = of_address_to_resource(np, 0, &res);
+	of_node_put(np);
+	if (ret)
+		return ret;
+
+	v821->aon_ccu = devm_ioremap(dev, res.start, resource_size(&res));
+	if (IS_ERR(v821->aon_ccu))
+		return PTR_ERR(v821->aon_ccu);
+
+	return 0;
+}
+
 static int v821_rproc_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
@@ -302,6 +341,10 @@ static int v821_rproc_probe(struct platform_device *pdev)
 		return PTR_ERR(v821->cfg);
 
 	ret = v821_rproc_map_ccu(dev, v821);
+	if (ret)
+		return ret;
+
+	ret = v821_rproc_map_aon_ccu(dev, v821);
 	if (ret)
 		return ret;
 
