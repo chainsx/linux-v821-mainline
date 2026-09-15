@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: GPL-2.0-only
+
+menuconfig WLAN_VENDOR_ALLWINNER
+	bool "Allwinner devices"
+	default y
+	help
+	  If you have a wireless LAN card based on an Allwinner design, say Y.
+
+if WLAN_VENDOR_ALLWINNER
+
+source "drivers/net/wireless/allwinner/v821_fmac/Kconfig"
+
+endif # WLAN_VENDOR_ALLWINNER

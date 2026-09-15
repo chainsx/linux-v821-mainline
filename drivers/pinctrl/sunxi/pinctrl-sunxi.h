@@ -137,6 +137,8 @@ struct sunxi_desc_pin {
 struct sunxi_pinctrl_desc {
 	const struct sunxi_desc_pin	*pins;
 	int				npins;
+	unsigned int			gpio_ngpio;
+	bool				no_gpio_direction;
 	unsigned			pin_base;
 	unsigned			irq_banks;
 	const unsigned int		*irq_bank_map;

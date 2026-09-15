@@ -29,6 +29,11 @@ properties:
           - const: allwinner,d1-nezha
           - const: allwinner,sun20i-d1
 
+      - description: Avaota F1 board
+        items:
+          - const: avaotasbc,avaota-f1
+          - const: allwinner,sun300i-v821
+
       - description: ClockworkPi R-01 SoM and v3.14 board
         items:
           - const: clockwork,r-01-clockworkpi-v3.14

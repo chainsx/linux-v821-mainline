@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: GPL-2.0-only
+
+config V821_FMAC_WLAN
+	tristate "Allwinner V821 XRADIO full MAC offload support"
+	depends on NET && WLAN && RPMSG && AW_RPBUF
+	help
+	  Say Y or M here to enable the WiFi offload interface found on the
+	  Allwinner V821. The 802.11 stack and MLME run on the E907 remote
+	  processor; Linux exchanges control messages over rpmsg and packet
+	  payload buffers over rpbuf. Two network interfaces are created for
+	  concurrent STA and AP operation.

@@ -1570,6 +1570,7 @@ int sunxi_pinctrl_init_with_flags(struct platform_device *pdev,
 	struct device_node *node = pdev->dev.of_node;
 	struct pinctrl_desc *pctrl_desc;
 	struct pinctrl_pin_desc *pins;
+	unsigned int *pin_ids;
 	struct sunxi_pinctrl *pctl;
 	struct pinmux_ops *pmxops;
 	int i, ret, last_pin, pin_idx;
@@ -1622,6 +1623,11 @@ int sunxi_pinctrl_init_with_flags(struct platform_device *pdev,
 	if (!pins)
 		return -ENOMEM;
 
+	pin_ids = devm_kcalloc(&pdev->dev, pctl->ngroups, sizeof(*pin_ids),
+			       GFP_KERNEL);
+	if (!pin_ids)
+		return -ENOMEM;
+
 	for (i = 0, pin_idx = 0; i < pctl->desc->npins; i++) {
 		const struct sunxi_desc_pin *pin = pctl->desc->pins + i;
 		unsigned long variant = pctl->flags & SUNXI_PINCTRL_VARIANT_MASK;
@@ -1630,6 +1636,7 @@ int sunxi_pinctrl_init_with_flags(struct platform_device *pdev,
 			continue;
 
 		pins[pin_idx++] = pin->pin;
+		pin_ids[pin_idx - 1] = pin->pin.number;
 	}
 
 	pctrl_desc = devm_kzalloc(&pdev->dev,
@@ -1665,12 +1672,18 @@ int sunxi_pinctrl_init_with_flags(struct platform_device *pdev,
 	if (!pctl->chip)
 		return -ENOMEM;
 
+	ret = of_clk_get_parent_count(node);
+	clk = devm_clk_get_enabled(&pdev->dev, ret == 1 ? NULL : "apb");
+	if (IS_ERR(clk))
+		return PTR_ERR(clk);
+
 	last_pin = pctl->desc->pins[pctl->desc->npins - 1].pin.number;
 	pctl->chip->owner = THIS_MODULE;
 	pctl->chip->request = gpiochip_generic_request;
 	pctl->chip->free = gpiochip_generic_free;
 	pctl->chip->set_config = gpiochip_generic_config;
-	pctl->chip->get_direction = sunxi_pinctrl_gpio_get_direction;
+	if (!pctl->desc->no_gpio_direction)
+		pctl->chip->get_direction = sunxi_pinctrl_gpio_get_direction;
 	pctl->chip->direction_input = sunxi_pinctrl_gpio_direction_input;
 	pctl->chip->direction_output = sunxi_pinctrl_gpio_direction_output;
 	pctl->chip->get = sunxi_pinctrl_gpio_get;
@@ -1679,7 +1692,8 @@ int sunxi_pinctrl_init_with_flags(struct platform_device *pdev,
 	pctl->chip->to_irq = sunxi_pinctrl_gpio_to_irq;
 	pctl->chip->of_gpio_n_cells = 3;
 	pctl->chip->can_sleep = false;
-	pctl->chip->ngpio = round_up(last_pin, PINS_PER_BANK) -
+	pctl->chip->ngpio = pctl->desc->gpio_ngpio ?:
+			    round_up(last_pin, PINS_PER_BANK) -
 			    pctl->desc->pin_base;
 	pctl->chip->label = dev_name(&pdev->dev);
 	pctl->chip->parent = &pdev->dev;
@@ -1689,22 +1703,12 @@ int sunxi_pinctrl_init_with_flags(struct platform_device *pdev,
 	if (ret)
 		return ret;
 
-	for (i = 0; i < pctl->desc->npins; i++) {
-		const struct sunxi_desc_pin *pin = pctl->desc->pins + i;
-
-		ret = gpiochip_add_pin_range(pctl->chip, dev_name(&pdev->dev),
-					     pin->pin.number - pctl->desc->pin_base,
-					     pin->pin.number, 1);
-		if (ret)
-			goto gpiochip_error;
-	}
-
-	ret = of_clk_get_parent_count(node);
-	clk = devm_clk_get_enabled(&pdev->dev, ret == 1 ? NULL : "apb");
-	if (IS_ERR(clk)) {
-		ret = PTR_ERR(clk);
+	ret = gpiochip_add_pin_range_with_pins(pctl->chip,
+					       dev_name(&pdev->dev), 0,
+					       pctl->desc->pin_base,
+					       pin_ids, pctl->ngroups);
+	if (ret)
 		goto gpiochip_error;
-	}
 
 	pctl->irq = devm_kcalloc(&pdev->dev,
 				 pctl->desc->irq_banks,

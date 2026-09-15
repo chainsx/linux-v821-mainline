@@ -332,6 +332,14 @@ config SUN6I_MSGBOX
 	  various Allwinner SoCs. This mailbox is used for communication
 	  between the application CPUs and the power management coprocessor.
 
+config SUN300I_V821_MSGBOX
+	tristate "Allwinner V821 Message Box"
+	depends on RISCV && ARCH_SUNXI
+	default ARCH_SUNXI
+	help
+	  Mailbox implementation for the two-processor message box used on the
+	  Allwinner V821 SoC.
+
 config SPRD_MBOX
 	tristate "Spreadtrum Mailbox"
 	depends on ARCH_SPRD || COMPILE_TEST

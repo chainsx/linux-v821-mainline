@@ -207,6 +207,8 @@ patternProperties:
     description: AU Optronics Corporation
   "^auvidea,.*":
     description: Auvidea GmbH
+  "^avaotasbc,.*":
+    description: AvaotaSBC
   "^avago,.*":
     description: Avago Technologies
   "^avia,.*":

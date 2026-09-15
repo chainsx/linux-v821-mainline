@@ -1,0 +1,60 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/dts-v1/;
+
+#include "sun300i-v821.dtsi"
+
+/ {
+	model = "AvaotaSBC Avaota F1";
+	compatible = "avaotasbc,avaota-f1", "allwinner,sun300i-v821";
+
+	chosen {
+		stdout-path = "serial0:115200n8";
+	};
+
+	memory@80000000 {
+		device_type = "memory";
+		reg = <0 0x80000000 0 0x4000000>;
+	};
+
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		e907_mem: e907@81000000 {
+			reg = <0 0x81000000 0 0x646000>;
+			no-map;
+		};
+
+		e907_rpbuf: e907-rpbuf@81646000 {
+			compatible = "shared-dma-pool";
+			reg = <0 0x81646000 0 0x8000>;
+			no-map;
+		};
+	};
+
+	rpbuf_controller: rpbuf-controller {
+		compatible = "allwinner,rpbuf-controller";
+		remoteproc = <&e907_rproc>;
+		memory-region = <&e907_rpbuf>;
+		status = "okay";
+	};
+
+	rpbuf_xradio: rpbuf-xradio {
+		compatible = "allwinner,rpbuf-xradio";
+		rpbuf = <&rpbuf_controller>;
+		status = "okay";
+	};
+};
+
+&e907_rproc {
+	status = "okay";
+};
+
+&mmc0 {
+	status = "okay";
+};
+
+&uart0 {
+	status = "okay";
+};

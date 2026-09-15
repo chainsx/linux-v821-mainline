@@ -70,6 +70,7 @@ obj-$(CONFIG_MTK_VCP_MBOX)	+= mtk-vcp-mailbox.o
 obj-$(CONFIG_ZYNQMP_IPI_MBOX)	+= zynqmp-ipi-mailbox.o
 
 obj-$(CONFIG_SUN6I_MSGBOX)	+= sun6i-msgbox.o
+obj-$(CONFIG_SUN300I_V821_MSGBOX)	+= sun300i-v821-msgbox.o
 
 obj-$(CONFIG_SPRD_MBOX)		+= sprd-mailbox.o
 

@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: GPL-2.0-only
+
+menu "Remote Processor Buffers"
+
+config AW_RPBUF
+	tristate
+	help
+	  This framework allocates large buffers and exchanges references to
+	  them with remote processors.
+
+config AW_RPBUF_SERVICE_RPMSG
+	tristate "RPMsg-based RPBuf service"
+	depends on RPMSG
+	select AW_RPBUF
+	help
+	  Say Y or M here to use rpmsg as the control transport for RPBuf.
+
+config AW_RPBUF_CONTROLLER_SUNXI
+	tristate "Allwinner RPBuf controller"
+	depends on AW_RPBUF_SERVICE_RPMSG
+	help
+	  Say Y or M here to support Allwinner reserved-memory RPBuf pools.
+
+endmenu

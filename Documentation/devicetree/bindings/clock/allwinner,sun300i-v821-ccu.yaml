@@ -1,0 +1,56 @@
+# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+%YAML 1.2
+---
+$id: http://devicetree.org/schemas/clock/allwinner,sun300i-v821-ccu.yaml#
+$schema: http://devicetree.org/meta-schemas/core.yaml#
+
+title: Allwinner V821 Application Clock Control Unit
+
+maintainers:
+  - ChainsX <chainsx@outlook.com>
+
+properties:
+  compatible:
+    const: allwinner,sun300i-v821-app-ccu
+
+  reg:
+    maxItems: 1
+
+  clocks:
+    items:
+      - description: High frequency oscillator
+      - description: Fixed 192 MHz peripheral PLL output
+      - description: Fixed 384 MHz peripheral PLL output
+
+  clock-names:
+    items:
+      - const: hosc
+      - const: pll-peri-192m
+      - const: pll-peri-384m
+
+  '#clock-cells':
+    const: 1
+
+  '#reset-cells':
+    const: 1
+
+required:
+  - compatible
+  - reg
+  - clocks
+  - clock-names
+  - '#clock-cells'
+  - '#reset-cells'
+
+additionalProperties: false
+
+examples:
+  - |
+    ccu: clock-controller@42001000 {
+        compatible = "allwinner,sun300i-v821-app-ccu";
+        reg = <0 0x42001000 0 0x100>;
+        clocks = <&dcxo>, <&pll_peri_192m>, <&pll_peri_384m>;
+        clock-names = "hosc", "pll-peri-192m", "pll-peri-384m";
+        #clock-cells = <1>;
+        #reset-cells = <1>;
+    };

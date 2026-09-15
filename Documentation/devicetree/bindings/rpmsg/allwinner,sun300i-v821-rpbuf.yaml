@@ -1,0 +1,59 @@
+# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+%YAML 1.2
+---
+$id: http://devicetree.org/schemas/rpmsg/allwinner,sun300i-v821-rpbuf.yaml#
+$schema: http://devicetree.org/meta-schemas/core.yaml#
+
+title: Allwinner V821 Remote Processor Buffers
+
+maintainers:
+  - ChainsX <chainsx@outlook.com>
+
+properties:
+  compatible:
+    enum:
+      - allwinner,rpbuf-controller
+      - allwinner,rpbuf-xradio
+
+  remoteproc:
+    $ref: /schemas/types.yaml#/definitions/phandle
+
+  rpbuf:
+    $ref: /schemas/types.yaml#/definitions/phandle
+
+  memory-region: true
+
+required:
+  - compatible
+
+allOf:
+  - if:
+      properties:
+        compatible:
+          const: allwinner,rpbuf-controller
+    then:
+      required:
+        - remoteproc
+        - memory-region
+      properties:
+        rpbuf: false
+  - if:
+      properties:
+        compatible:
+          const: allwinner,rpbuf-xradio
+    then:
+      required:
+        - rpbuf
+      properties:
+        remoteproc: false
+        memory-region: false
+
+additionalProperties: false
+
+examples:
+  - |
+    rpbuf-controller {
+        compatible = "allwinner,rpbuf-controller";
+        remoteproc = <&rproc>;
+        memory-region = <&e907_mem>;
+    };
