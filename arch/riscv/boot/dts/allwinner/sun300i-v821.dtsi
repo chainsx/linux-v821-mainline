@@ -136,7 +136,7 @@
 
 			/omit-if-no-ref/
 			spif_pins: spif-pins {
-				pins = "PC6", "PC7", "PC8", "PC9", "PC10", "PC11";
+				pins = "PC8", "PC9", "PC11";
 				function = "spif";
 				drive-strength = <20>;
 			};

@@ -43,6 +43,11 @@
 			no-map;
 		};
 
+		e907_fw_mem: e907-fw@81244000 {
+			reg = <0 0x81244000 0 0x200000>;
+			no-map;
+		};
+
 		share_irq_table: share-irq-table@81644000 {
 			reg = <0 0x81644000 0 0x2000>;
 			no-map;
