@@ -6,12 +6,10 @@
 #include <linux/clk.h>
 #include <linux/io.h>
 #include <linux/mailbox_client.h>
-#include <linux/mfd/syscon.h>
 #include <linux/mod_devicetable.h>
 #include <linux/module.h>
 #include <linux/of_address.h>
 #include <linux/platform_device.h>
-#include <linux/regmap.h>
 #include <linux/remoteproc.h>
 #include <linux/reset.h>
 
@@ -24,9 +22,9 @@ struct v821_rproc {
 	struct device *dev;
 	void __iomem *cfg;
 	void __iomem *mem;
+	void __iomem *ccu;
 	phys_addr_t mem_pa;
 	resource_size_t mem_size;
-	struct regmap *ccu;
 	struct clk *core_clk;
 	struct clk *gate_clk;
 	struct clk *ts_clk;
@@ -43,7 +41,7 @@ static void v821_rproc_core_reset(struct v821_rproc *v821, bool assert)
 	if (assert)
 		value |= E907_CORE_RESET_BIT;
 
-	regmap_write(v821->ccu, E907_CORE_RESET_REG, value);
+	writel(value, v821->ccu + E907_CORE_RESET_REG);
 }
 
 static int v821_rproc_start(struct rproc *rproc)
@@ -169,6 +167,28 @@ static int v821_rproc_map_memory(struct device *dev, struct v821_rproc *v821)
 	return 0;
 }
 
+static int v821_rproc_map_ccu(struct device *dev, struct v821_rproc *v821)
+{
+	struct device_node *np;
+	struct resource res;
+	int ret;
+
+	np = of_parse_phandle(dev->of_node, "allwinner,ccu", 0);
+	if (!np)
+		return dev_err_probe(dev, -EINVAL, "missing CCU phandle\n");
+
+	ret = of_address_to_resource(np, 0, &res);
+	of_node_put(np);
+	if (ret)
+		return ret;
+
+	v821->ccu = devm_ioremap(dev, res.start, resource_size(&res));
+	if (IS_ERR(v821->ccu))
+		return PTR_ERR(v821->ccu);
+
+	return 0;
+}
+
 static int v821_rproc_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
@@ -195,10 +215,9 @@ static int v821_rproc_probe(struct platform_device *pdev)
 	if (IS_ERR(v821->cfg))
 		return PTR_ERR(v821->cfg);
 
-	v821->ccu = syscon_regmap_lookup_by_phandle(dev->of_node,
-						    "allwinner,ccu");
-	if (IS_ERR(v821->ccu))
-		return PTR_ERR(v821->ccu);
+	ret = v821_rproc_map_ccu(dev, v821);
+	if (ret)
+		return ret;
 
 	v821->core_clk = devm_clk_get_enabled(dev, "core");
 	v821->gate_clk = devm_clk_get(dev, "gate");
