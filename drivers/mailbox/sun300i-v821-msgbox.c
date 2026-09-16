@@ -52,7 +52,18 @@ static int v821_msgbox_startup(struct mbox_chan *chan)
 {
 	struct v821_msgbox *msgbox = to_v821_msgbox(chan);
 	unsigned int index = v821_msgbox_channel_index(chan);
+	unsigned int i;
 	u32 val;
+
+	/* Drain stale messages before enabling the receive interrupt. */
+	for (i = 0; i < V821_MSGBOX_FIFO_DEPTH; i++) {
+		if (!FIELD_GET(MSG_COUNT_MASK,
+			       readl(msgbox->local +
+				     MSGBOX_MSG_STATUS(0, index))))
+			break;
+
+		readl(msgbox->local + MSGBOX_MSG_FIFO(0, index));
+	}
 
 	val = readl(msgbox->local + MSGBOX_IRQ_STATUS(0));
 	writel(val | IRQ_STATUS(index), msgbox->local + MSGBOX_IRQ_STATUS(0));
