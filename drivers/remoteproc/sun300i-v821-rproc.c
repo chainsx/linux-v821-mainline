@@ -261,12 +261,12 @@ static int v821_rproc_prepare(struct rproc *rproc)
 		name_end = strchrnul(res.name, '@');
 
 		if (strstarts(res.name, "vdev0buffer")) {
-			mem = rproc_of_resm_mem_entry_init(&rproc->dev,
-							   region,
-							   resource_size(&res),
-							   da,
-							   "vdev%dbuffer",
-							   vdev_index++);
+			mem = rproc_mem_entry_init(&rproc->dev, NULL,
+						   res.start,
+						   resource_size(&res), da,
+						   NULL, NULL,
+						   "vdev%dbuffer",
+						   vdev_index++);
 		} else {
 			mem = rproc_mem_entry_init(&rproc->dev, NULL,
 						   res.start,
