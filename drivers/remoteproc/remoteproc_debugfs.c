@@ -399,6 +399,9 @@ void rproc_create_debug_dir(struct rproc *rproc)
 {
 	struct device *dev = &rproc->dev;
 
+	/* Embedded systems may mount debugfs after built-in remoteproc init. */
+	if (!rproc_dbg && debugfs_initialized())
+		rproc_dbg = debugfs_create_dir(KBUILD_MODNAME, NULL);
 	if (!rproc_dbg)
 		return;
 
