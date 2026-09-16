@@ -1060,13 +1060,17 @@ static int sunxi_pinctrl_gpio_of_xlate(struct gpio_chip *gc,
 	base = PINS_PER_BANK * gpiospec->args[0];
 	pin = base + gpiospec->args[1];
 
-	if (pin > gc->ngpio)
+	/*
+	 * Sparse controllers start at a bank other than PA.  Their GPIO
+	 * numbers are relative to the first exported pin, not to PA.
+	 */
+	if (pin < gc->base || pin >= gc->base + gc->ngpio)
 		return -EINVAL;
 
 	if (flags)
 		*flags = gpiospec->args[2];
 
-	return pin;
+	return pin - gc->base;
 }
 
 static int sunxi_pinctrl_gpio_to_irq(struct gpio_chip *chip, unsigned offset)
