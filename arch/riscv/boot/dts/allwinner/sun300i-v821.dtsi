@@ -245,8 +245,9 @@
 			compatible = "allwinner,sun300i-v821-mmc";
 			reg = <0 0x44020000 0 0x1000>;
 			interrupts = <41 IRQ_TYPE_LEVEL_HIGH>;
-			clocks = <&ccu CLK_BUS_MMC0>, <&ccu CLK_MMC0>;
-			clock-names = "ahb", "mmc";
+			clocks = <&ccu CLK_BUS_MMC0>, <&ccu CLK_MMC0>,
+				 <&ccu CLK_MBUS_MMC0>;
+			clock-names = "ahb", "mmc", "mbus";
 			resets = <&ccu RST_BUS_MMC0>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&mmc0_pins>, <&mmc0_data2_pin>;
