@@ -18,5 +18,6 @@
 #define CLK_MSGBOX		12
 #define CLK_E907_TS		13
 #define CLK_RISCV		14
+#define CLK_MBUS_MMC0		15
 
 #endif

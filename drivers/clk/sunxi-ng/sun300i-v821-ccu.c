@@ -39,6 +39,8 @@ static SUNXI_CCU_DUALDIV_MUX_GATE(spif_clk, "spif", spif_parents, 0x020,
 
 static SUNXI_CCU_GATE_DATA(bus_mmc0_clk, "bus-mmc0", bus_parents,
 			   0x084, BIT(20), 0);
+static SUNXI_CCU_GATE_DATA(mbus_mmc0_clk, "mbus-mmc0", bus_parents,
+			   0x084, BIT(15), 0);
 static SUNXI_CCU_GATE_DATA(bus_uart0_clk, "bus-uart0", bus_parents,
 			   0x080, BIT(15), 0);
 static SUNXI_CCU_GATE_DATA(bus_spif_clk, "bus-spif", bus_parents,
@@ -57,6 +59,7 @@ static struct ccu_common *sun300i_v821_ccu_clks[] = {
 	&bus_uart0_clk.common,
 	&bus_spif_clk.common,
 	&msgbox_clk.common,
+	&mbus_mmc0_clk.common,
 	&e907_ts_clk.common,
 	&riscv_clk.common,
 };
@@ -69,10 +72,11 @@ static struct clk_hw_onecell_data sun300i_v821_hw_clks = {
 		[CLK_BUS_UART0]	= &bus_uart0_clk.common.hw,
 		[CLK_BUS_SPIF]		= &bus_spif_clk.common.hw,
 		[CLK_MSGBOX]		= &msgbox_clk.common.hw,
+		[CLK_MBUS_MMC0]		= &mbus_mmc0_clk.common.hw,
 		[CLK_E907_TS]		= &e907_ts_clk.common.hw,
 		[CLK_RISCV]		= &riscv_clk.common.hw,
 	},
-	.num	= CLK_RISCV + 1,
+	.num	= CLK_MBUS_MMC0 + 1,
 };
 
 static const struct ccu_reset_map sun300i_v821_resets[] = {
