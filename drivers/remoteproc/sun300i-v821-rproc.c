@@ -262,7 +262,7 @@ static int v821_rproc_prepare(struct rproc *rproc)
 
 		if (strstarts(res.name, "vdev0buffer")) {
 			mem = rproc_of_resm_mem_entry_init(&rproc->dev,
-							   region - 1,
+							   region,
 							   resource_size(&res),
 							   da,
 							   "vdev%dbuffer",
