@@ -65,7 +65,7 @@ static struct irq_chip sunxi_pinctrl_level_irq_chip;
  */
 static u32 sunxi_bank_offset(const struct sunxi_pinctrl *pctl, u32 pin)
 {
-	u32 offset = 0;
+	u32 offset = pctl->desc->first_bank * pctl->bank_mem_size;
 
 	if (pin >= PK_BASE) {
 		pin -= PK_BASE;

@@ -144,6 +144,7 @@ struct sunxi_pinctrl_desc {
 	const unsigned int		*irq_bank_map;
 	bool				irq_read_needs_mux;
 	bool				disable_strict_mode;
+	u32				first_bank;
 	enum sunxi_desc_bias_voltage	io_bias_cfg_variant;
 };
 

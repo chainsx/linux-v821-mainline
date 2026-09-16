@@ -102,6 +102,7 @@ static const struct sunxi_pinctrl_desc sun300i_v821_pinctrl_data = {
 	.gpio_ngpio	= ARRAY_SIZE(sun300i_v821_pins),
 	.no_gpio_direction = true,
 	.pin_base	= PC_BASE,
+	.first_bank	= PC_BASE / PINS_PER_BANK,
 	.irq_bank_map	= sun300i_v821_irq_bank_map,
 	.irq_banks	= ARRAY_SIZE(sun300i_v821_irq_bank_map),
 };
@@ -133,7 +134,8 @@ static const struct sunxi_pinctrl_desc sun300i_v821_r_pinctrl_data = {
 
 static int sun300i_v821_pinctrl_probe(struct platform_device *pdev)
 {
-	return sunxi_pinctrl_init_with_flags(pdev, &sun300i_v821_pinctrl_data, 0);
+	return sunxi_pinctrl_init_with_flags(pdev, &sun300i_v821_pinctrl_data,
+					     SUNXI_PINCTRL_NEW_REG_LAYOUT);
 }
 
 static int sun300i_v821_r_pinctrl_probe(struct platform_device *pdev)

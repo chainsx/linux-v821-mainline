@@ -20,6 +20,8 @@
 #define E907_CORE_RESET_REG		0x09c
 #define E907_CORE_RESET_KEY		0xa5690000
 #define E907_CORE_RESET_BIT		BIT(0)
+#define E907_CORE_GATE_REG		0x080
+#define E907_CORE_GATE_BIT		BIT(0)
 #define E907_AON_CLK_REG		0x584
 #define E907_AON_CLK_MUX_MASK		GENMASK(26, 24)
 #define E907_AON_CLK_DIV_MASK		GENMASK(4, 0)
@@ -62,6 +64,14 @@ static void v821_rproc_select_core_clock(struct v821_rproc *v821)
 	writel(value, v821->aon_ccu + E907_AON_CLK_REG);
 }
 
+static void v821_rproc_disable_core_gate(struct v821_rproc *v821)
+{
+	u32 value = readl(v821->ccu + E907_CORE_GATE_REG);
+
+	writel(value & ~E907_CORE_GATE_BIT,
+	       v821->ccu + E907_CORE_GATE_REG);
+}
+
 static int v821_rproc_start(struct rproc *rproc)
 {
 	struct v821_rproc *v821 = rproc->priv;
@@ -78,6 +88,7 @@ static int v821_rproc_start(struct rproc *rproc)
 
 	v821_rproc_core_reset(v821, true);
 
+	v821_rproc_disable_core_gate(v821);
 	v821_rproc_select_core_clock(v821);
 
 	ret = clk_prepare_enable(v821->ts_clk);
