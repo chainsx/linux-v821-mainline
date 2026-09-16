@@ -4,6 +4,7 @@
  */
 
 #include <linux/clk.h>
+#include <linux/dma-mapping.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/mailbox_client.h>
@@ -72,6 +73,16 @@ static void v821_rproc_disable_core_gate(struct v821_rproc *v821)
 	       v821->ccu + E907_CORE_GATE_REG);
 }
 
+static void v821_rproc_sync_firmware(struct v821_rproc *v821)
+{
+	/*
+	 * RV32 cannot express write-combine PTE memory types.  Clean the
+	 * A27 data cache so E907 observes the ELF loader writes after reset.
+	 */
+	dma_sync_single_for_device(v821->dev, v821->mem_pa, v821->mem_size,
+				   DMA_TO_DEVICE);
+}
+
 static int v821_rproc_start(struct rproc *rproc)
 {
 	struct v821_rproc *v821 = rproc->priv;
@@ -118,6 +129,8 @@ static int v821_rproc_start(struct rproc *rproc)
 		ret = -EIO;
 		goto err_apb_assert;
 	}
+
+	v821_rproc_sync_firmware(v821);
 
 	v821_rproc_core_reset(v821, false);
 
