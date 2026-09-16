@@ -133,10 +133,18 @@
 
 			/omit-if-no-ref/
 			mmc0_pins: mmc0-pins {
-				pins = "PC0", "PC1", "PC2", "PC3", "PC4", "PC5";
+				pins = "PC0", "PC1", "PC2", "PC3", "PC5";
 				function = "mmc0";
 				drive-strength = <30>;
 				bias-pull-up;
+			};
+
+			/omit-if-no-ref/
+			mmc0_data2_pin: mmc0-data2-pin {
+				pins = "PC4";
+				function = "mmc0";
+				drive-strength = <30>;
+				bias-disable;
 			};
 
 			/omit-if-no-ref/
@@ -241,7 +249,7 @@
 			clock-names = "ahb", "mmc";
 			resets = <&ccu RST_BUS_MMC0>;
 			pinctrl-names = "default";
-			pinctrl-0 = <&mmc0_pins>;
+			pinctrl-0 = <&mmc0_pins>, <&mmc0_data2_pin>;
 			bus-width = <4>;
 			cap-sd-highspeed;
 			max-frequency = <50000000>;
