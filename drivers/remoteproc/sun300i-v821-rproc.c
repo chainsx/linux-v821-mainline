@@ -47,10 +47,11 @@ struct v821_rproc {
 
 static void v821_rproc_core_reset(struct v821_rproc *v821, bool assert)
 {
-	u32 value = E907_CORE_RESET_KEY;
+	u32 value = E907_CORE_RESET_KEY | E907_CORE_RESET_BIT;
 
+	/* RST_BUS_E907 is active low and requires the CCU write key. */
 	if (assert)
-		value |= E907_CORE_RESET_BIT;
+		value &= ~E907_CORE_RESET_BIT;
 
 	writel(value, v821->ccu + E907_CORE_RESET_REG);
 }
